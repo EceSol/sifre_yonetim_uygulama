@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QVBoxLayout, QPushButton
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 from dialogs import EditPasswordDialog
+from PyQt5.QtWidgets import QMessageBox
 
 class PasswordPanel(QDialog):
     def __init__(self, platform_name, username, password, color):
@@ -75,11 +76,8 @@ class PasswordPanel(QDialog):
         self.setLayout(layout)
 
     def show_password(self):
-        # Şifreyi göster/gizle işlevi
-        if self.password_label.text() == "Şifre: ******":
-            self.password_label.setText(f"Şifre: {self.password}")
-        else:
-            self.password_label.setText("Şifre: ******")
+        """Şifreyi göster/gizle işlevi."""
+        QMessageBox.information(self, "Bilgi", "Şifreler hashlenmiş olduğu için gösterilemez.")
 
     def edit_password(self):
         # Şifre düzenleme işlevi
@@ -89,6 +87,9 @@ class PasswordPanel(QDialog):
             pass
 
     def delete_password(self):
-        # Şifre silme işlevi
-        self.password_label.setText("Şifre: ******")
-        self.username_label.setText("Kullanıcı Adı: ")
+      confirm = QMessageBox.question(self, "Onay", "Bu platformu silmek istediğinize emin misiniz?", QMessageBox.Yes | QMessageBox.No)
+      if confirm == QMessageBox.Yes:
+        # Veritabanından silme işlemi
+        self.veritabani.platform_sil(self.platform_id)  # self.platform_id platformun ID'si olmalı
+        QMessageBox.information(self, "Başarılı", "Platform başarıyla silindi.")
+        self.accept()

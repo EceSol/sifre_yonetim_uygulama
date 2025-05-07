@@ -3,7 +3,8 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 
 class AddPasswordDialog(QDialog):
-    def __init__(self):
+    def __init__(self, veritabani):
+        self.veritabani = veritabani
         super().__init__()
         self.setWindowTitle("Yeni Şifre Ekle")
         self.setMinimumSize(400, 300)
@@ -74,10 +75,30 @@ class AddPasswordDialog(QDialog):
         """)
 
     def select_color(self):
+        # Renk seçme işlemi
         color = QColorDialog.getColor()
         if color.isValid():
             self.selected_color = color
-            self.color_button.setStyleSheet(f"background-color: {color.name()};")
+
+    def accept(self):
+    # Boş alanları kontrol et
+        if not self.platform_input.text() or not self.username_input.text() or not self.password_input.text():
+           QMessageBox.warning(self, "Hata", "Tüm alanları doldurmanız gerekiyor!")
+           return
+        if self.selected_color.name() == "#ffffff":  # Varsayılan renk kontrolü
+           QMessageBox.warning(self, "Hata", "Bir renk seçmeniz gerekiyor!")
+           return
+
+        # Eğer tüm alanlar doluysa, kaydet
+        self.veritabani.platform_ekle(
+            2,
+            self.platform_input.text(),
+            self.username_input.text(),
+            self.password_input.text(),
+            self.selected_color.name()
+        )
+
+        super().accept()
 
 
 class EditPasswordDialog(QDialog):

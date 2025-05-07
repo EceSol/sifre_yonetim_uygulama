@@ -3,8 +3,9 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
 class LoginPage(QDialog):
-    def __init__(self):
+    def __init__(self, veritabani):
         super().__init__()
+        self.veritabani = veritabani  # Veritabanı nesnesini sınıfa ekle
         self.setWindowTitle("Kullanıcı Girişi")
         self.setFixedSize(400, 300)
         self.setStyleSheet("""
@@ -64,10 +65,16 @@ class LoginPage(QDialog):
         self.setLayout(layout)
 
     def login(self):
-        username = self.username_input.text()
-        password = self.password_input.text()
+        """Kullanıcı giriş işlemi."""
+        kullanici_adi = self.username_input.text()
+        sifre = self.password_input.text()
 
-        if username == "user" and password == "password":
-            self.accept()  # Giriş başarılı
+        # Veritabanından kullanıcıyı al ve doğrula
+        cursor = self.veritabani.conn.cursor()
+        cursor.execute("SELECT sifre_hash FROM kullanicilar WHERE kullanici_adi = ?", (kullanici_adi,))
+        result = cursor.fetchone()
+        if result and self.veritabani.sifre_dogrula(sifre, result[0]):
+            QMessageBox.information(self, "Başarılı", "Giriş başarılı!")
+            self.accept()
         else:
             QMessageBox.warning(self, "Hata", "Kullanıcı adı veya şifre yanlış!")
