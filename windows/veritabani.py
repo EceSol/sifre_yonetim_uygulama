@@ -36,13 +36,14 @@ class Veritabani:
                     platform_rengi TEXT NOT NULL,
                     kullanici_adi TEXT NOT NULL,
                     sifre_hash BLOB NOT NULL,
+                    sifre_duz TEXT,  -- Düz metin şifre sütunu
                     FOREIGN KEY (kullanici_id) REFERENCES kullanicilar (id) ON DELETE CASCADE
                 )
             """)
             self.conn.commit()
         except Error as e:
             print(f"Tablo oluşturma hatası: {e}")
-
+    
     def sifre_hashle(self, sifre):
         """Bir şifreyi hashler."""
         salt = os.urandom(16)  # Rastgele bir salt oluştur
@@ -78,38 +79,75 @@ class Veritabani:
         except sqlite3.Error as e:
             print(f"Veritabanı hatası: {e}")
             return False
-    
+
+    def guncelle_sifre(self, platform_id, yeni_sifre):
+        """Platformun şifresini günceller."""
+        try:
+            cursor = self.conn.cursor()
+            sifre_hash = self.sifre_hashle(yeni_sifre)  # Şifreyi hashle
+            cursor.execute("""
+                UPDATE platformlar
+                SET sifre_hash = ?, sifre_duz = ?
+                WHERE id = ?
+            """, (sifre_hash, yeni_sifre, platform_id))
+            self.conn.commit()
+            print("Şifre başarıyla güncellendi.")
+        except Error as e:
+            print(f"Şifre güncelleme hatası: {e}")
+
     def platformlari_getir(self, kullanici_id):
-     """Kullanıcıya ait platformları getirir."""
-     try:
-         cursor = self.conn.cursor()
-         cursor.execute("""
-             SELECT platform_adi, platform_rengi, kullanici_adi, sifre_hash
-             FROM platformlar WHERE kullanici_id = ?
-         """, (kullanici_id,))
-         rows = cursor.fetchall()
-         return [
-             {
-                 'platform_adi': row[0],
-                 'platform_rengi': row[1],
-                 'kullanici_adi': row[2],
-                 'sifre': row[3]
-             }
-             for row in rows
-         ]
-     except Error as e:
-         print(f"Platformları getirme hatası: {e}")
-         return []
+        """Kullanıcıya ait platformları getirir."""
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("""
+                SELECT id, platform_adi, platform_rengi, kullanici_adi, sifre_duz
+                FROM platformlar WHERE kullanici_id = ?
+            """, (kullanici_id,))
+            rows = cursor.fetchall()
+            return [
+                {
+                    'platform_id': row[0],
+                    'platform_adi': row[1],
+                    'platform_rengi': row[2],
+                    'kullanici_adi': row[3],
+                    'sifre': row[4]
+                }
+                for row in rows
+            ]
+        except Error as e:
+            print(f"Platformları getirme hatası: {e}")
+            return []
         
     def platform_ekle(self, kullanici_id, platform_adi, kullanici_adi, sifre, platform_rengi):
         """Yeni bir platform ekler."""
         try:
             cursor = self.conn.cursor()
+            # Aynı platformun zaten var olup olmadığını kontrol et
+            cursor.execute("""
+                SELECT 1 FROM platformlar
+                WHERE kullanici_id = ? AND platform_adi = ? AND kullanici_adi = ?
+            """, (kullanici_id, platform_adi, kullanici_adi))
+            if cursor.fetchone():
+                print("Bu platform zaten mevcut, tekrar eklenmedi.")
+                return  # Platform zaten mevcut, ekleme işlemini durdur
+    
+            # Platformu ekle
             sifre_hash = self.sifre_hashle(sifre)
             cursor.execute("""
-                INSERT INTO platformlar (kullanici_id, platform_adi, platform_rengi, kullanici_adi, sifre_hash)
-                VALUES (?, ?, ?, ?, ?)
-            """, (kullanici_id, platform_adi, platform_rengi, kullanici_adi, sifre_hash))
+                INSERT INTO platformlar (kullanici_id, platform_adi, platform_rengi, kullanici_adi, sifre_hash, sifre_duz)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (kullanici_id, platform_adi, platform_rengi, kullanici_adi, sifre_hash, sifre))
             self.conn.commit()
+
         except Error as e:
             print(f"Platform ekleme hatası: {e}")
+
+    def platform_sil(self, platform_id):
+        """Belirtilen platformu veritabanından siler."""
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("DELETE FROM platformlar WHERE id = ?", (platform_id,))
+            self.conn.commit()
+
+        except Error as e:
+            print(f"Platform silme hatası: {e}")

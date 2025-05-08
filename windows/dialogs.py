@@ -28,7 +28,7 @@ class AddPasswordDialog(QDialog):
         self.selected_color = QColor("white")  # Varsayılan renk
 
         # Kaydet ve İptal Butonları
-        self.save_button = QPushButton("Kaydet")
+        self.save_button = QPushButton("Kaydet")  # `save_button` burada tanımlanıyor
         self.save_button.clicked.connect(self.accept)  # Kaydet'e basınca diyalogu kapat
         self.cancel_button = QPushButton("İptal")
         self.cancel_button.clicked.connect(self.reject)
@@ -81,29 +81,39 @@ class AddPasswordDialog(QDialog):
             self.selected_color = color
 
     def accept(self):
-    # Boş alanları kontrol et
-        if not self.platform_input.text() or not self.username_input.text() or not self.password_input.text():
-           QMessageBox.warning(self, "Hata", "Tüm alanları doldurmanız gerekiyor!")
-           return
-        if self.selected_color.name() == "#ffffff":  # Varsayılan renk kontrolü
-           QMessageBox.warning(self, "Hata", "Bir renk seçmeniz gerekiyor!")
-           return
 
-        # Eğer tüm alanlar doluysa, kaydet
-        self.veritabani.platform_ekle(
-            2,
-            self.platform_input.text(),
-            self.username_input.text(),
-            self.password_input.text(),
-            self.selected_color.name()
-        )
-
-        super().accept()
-
+    
+        platform_name = self.platform_input.text()
+        username = self.username_input.text()
+        password = self.password_input.text()
+        color = self.selected_color.name()  # Seçilen rengin hex kodunu al
+    
+        # Alanların boş olup olmadığını kontrol et
+        if not platform_name or not username or not password:
+            QMessageBox.warning(self, "Hata", "Tüm alanları doldurmanız gerekiyor!")
+            return
+    
+        # Veritabanına yeni platform ekle
+        try:
+            self.veritabani.platform_ekle(
+                kullanici_id=1,  # Örnek kullanıcı ID'si, bunu dinamik hale getirebilirsiniz
+                platform_adi=platform_name,
+                kullanici_adi=username,
+                sifre=password,
+                platform_rengi=color
+            )
+            QMessageBox.information(self, "Başarılı", "Yeni platform başarıyla eklendi!")
+            super().accept()
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Platform eklenirken bir hata oluştu: {e}")
 
 class EditPasswordDialog(QDialog):
-    def __init__(self):
+    def __init__(self, veritabani, platform_id, mevcut_sifre):
         super().__init__()
+        print("EditPasswordDialog açıldı.")
+        self.veritabani = veritabani
+        self.platform_id = platform_id
+        self.mevcut_sifre = mevcut_sifre  # Mevcut şifreyi sakla
         self.setWindowTitle("Şifre Düzenle")
         self.setMinimumSize(400, 300)
         self.setStyleSheet("""
@@ -148,7 +158,7 @@ class EditPasswordDialog(QDialog):
             border-radius: 5px;
         """)
 
-        # Butonlar
+        # Kaydet ve İptal Butonları
         self.save_button = QPushButton("Kaydet")
         self.save_button.setStyleSheet("""
             background-color: #4CAF50;
@@ -157,6 +167,8 @@ class EditPasswordDialog(QDialog):
             border-radius: 5px;
             font-size: 16px;
         """)
+        self.save_button.clicked.connect(self.accept)
+
         self.cancel_button = QPushButton("İptal")
         self.cancel_button.setStyleSheet("""
             background-color: #f44336;
@@ -180,3 +192,39 @@ class EditPasswordDialog(QDialog):
         layout.setSpacing(15)  # Elemanlar arası boşluk
 
         self.setLayout(layout)
+
+    def accept(self):
+        """Şifre doğrula ve güncelle."""
+        old_password = self.old_password_input.text()
+        new_password = self.new_password_input.text()
+        confirm_password = self.confirm_new_password_input.text()
+
+        # Mevcut şifreyi doğrula
+        if old_password != self.mevcut_sifre:
+            QMessageBox.warning(self, "Hata", "Mevcut şifre yanlış!")
+            return
+
+        # Yeni şifrelerin eşleşip eşleşmediğini kontrol et
+        if new_password != confirm_password:
+            QMessageBox.warning(self, "Hata", "Yeni şifreler eşleşmiyor!")
+            return
+
+        # Yeni şifre boş olamaz
+        if not new_password:
+            QMessageBox.warning(self, "Hata", "Yeni şifre boş olamaz!")
+            return
+
+        # Şifreyi veritabanında güncelle
+        self.veritabani.guncelle_sifre(self.platform_id, new_password)
+        QMessageBox.information(self, "Başarılı", "Şifre başarıyla güncellendi!")
+        super().accept()
+
+    def edit_password(self):
+        """Şifre düzenleme işlevi."""
+
+        self.edit_dialog = EditPasswordDialog(self.veritabani, self.platform_id, self.password)
+        if self.edit_dialog.exec_() == QDialog.Accepted:
+            # Yeni şifreyi güncelle
+            self.password = self.edit_dialog.new_password_input.text()  # Yeni şifreyi al
+            self.password_label.setText("Şifre: ******")  # Şifreyi gizli olarak göster
+            QMessageBox.information(self, "Başarılı", "Şifre başarıyla güncellendi!")
