@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QColorDialog, QMessageBox
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
+import random
 
 class AddPasswordDialog(QDialog):
     def __init__(self, veritabani):
@@ -22,16 +23,25 @@ class AddPasswordDialog(QDialog):
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)  # Şifre gizleme
 
-        # Renk Seçme Butonu
         self.color_button = QPushButton("Renk Seç")
         self.color_button.clicked.connect(self.select_color)
-        self.selected_color = QColor("white")  # Varsayılan renk
+        # Rastgele renk oluştur
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        self.selected_color = QColor(r, g, b)  # Varsayılan rastgele renk
 
         # Kaydet ve İptal Butonları
         self.save_button = QPushButton("Kaydet")  # `save_button` burada tanımlanıyor
         self.save_button.clicked.connect(self.accept)  # Kaydet'e basınca diyalogu kapat
         self.cancel_button = QPushButton("İptal")
         self.cancel_button.clicked.connect(self.reject)
+
+        
+        # Renk göstergesi
+        self.color_label = QLabel()
+        self.color_label.setFixedSize(40, 20)
+        self.color_label.setStyleSheet(f"background-color: {self.selected_color.name()}; border: 1px solid #333;")
 
         # Layout
         layout = QVBoxLayout()
@@ -75,10 +85,20 @@ class AddPasswordDialog(QDialog):
         """)
 
     def select_color(self):
-        # Renk seçme işlemi
         color = QColorDialog.getColor()
         if color.isValid():
             self.selected_color = color
+            self.color_label.setStyleSheet(f"background-color: {self.selected_color.name()}; border: 1px solid #333;")
+            self.update_save_button_color()
+
+    def update_save_button_color(self):
+        self.save_button.setStyleSheet(f"""
+            background-color: {self.selected_color.name()};
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+        """)
 
     def accept(self):
 
@@ -110,7 +130,6 @@ class AddPasswordDialog(QDialog):
 class EditPasswordDialog(QDialog):
     def __init__(self, veritabani, platform_id, mevcut_sifre):
         super().__init__()
-        print("EditPasswordDialog açıldı.")
         self.veritabani = veritabani
         self.platform_id = platform_id
         self.mevcut_sifre = mevcut_sifre  # Mevcut şifreyi sakla
