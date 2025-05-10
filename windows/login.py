@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox,QHBoxLayout
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
@@ -42,6 +42,26 @@ class LoginPage(QDialog):
             border-radius: 5px;
         """)
 
+         # Göz simgesi/göster-gizle butonu
+        self.toggle_password_button = QPushButton("👁")
+        self.toggle_password_button.setCheckable(True)
+        self.toggle_password_button.setFixedWidth(30)
+        self.toggle_password_button.setFixedHeight(self.password_input.sizeHint().height())
+        self.toggle_password_button.setStyleSheet("""
+            border: none;
+            background: transparent;
+            font-size: 18px;
+        """)
+        self.toggle_password_button.clicked.connect(self.toggle_password_visibility)
+
+        # Şifre alanı ve göz butonunu yatayda hizala
+        password_layout = QHBoxLayout()
+        password_layout.addWidget(self.password_input)
+        password_layout.addWidget(self.toggle_password_button)
+        password_layout.setContentsMargins(0, 0, 0, 0)
+        password_layout.setSpacing(0)
+
+
         # Giriş Butonu
         self.login_button = QPushButton("Giriş Yap")
         self.login_button.setStyleSheet("""
@@ -58,11 +78,19 @@ class LoginPage(QDialog):
         layout.addWidget(self.username_label)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_label)
-        layout.addWidget(self.password_input)
+        layout.addLayout(password_layout)
         layout.addWidget(self.login_button)
         layout.setSpacing(15)
 
         self.setLayout(layout)
+
+    def toggle_password_visibility(self):
+        if self.toggle_password_button.isChecked():
+            self.password_input.setEchoMode(QLineEdit.Normal)
+            self.toggle_password_button.setText("🙈")
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+            self.toggle_password_button.setText("👁")
 
     def login(self):
         """Kullanıcı giriş işlemi."""
