@@ -3,6 +3,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 from dialogs import EditPasswordDialog
 from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QApplication
 
 class PasswordPanel(QDialog):
     def __init__(self, veritabani, platform_id, platform_name, username, password, color, parent=None):
@@ -43,6 +44,17 @@ class PasswordPanel(QDialog):
         """)
         self.show_password_button.clicked.connect(self.show_password)
 
+        self.copy_password_button = QPushButton("Şifreyi Kopyala")
+        self.copy_password_button.setStyleSheet("""
+            background-color: orange;
+            border: 2px solid darkorange;
+            padding: 10px;
+            font-size: 16px;
+            color: black;
+            border-radius: 5px;
+        """)
+        self.copy_password_button.clicked.connect(self.copy_password)
+
         self.edit_password_button = QPushButton("Şifreyi Düzenle")
         self.edit_password_button.setStyleSheet("""
             background-color: lightblue;
@@ -71,6 +83,7 @@ class PasswordPanel(QDialog):
         layout.addWidget(self.username_label)
         layout.addWidget(self.password_label)
         layout.addWidget(self.show_password_button)
+        layout.addWidget(self.copy_password_button)
         layout.addWidget(self.edit_password_button)
         layout.addWidget(self.delete_password_button)
 
@@ -79,6 +92,12 @@ class PasswordPanel(QDialog):
     def show_password(self):
         """Şifreyi göster/gizle işlevi."""
         QMessageBox.information(self, "Şifre", f"Şifre: {self.password}")
+
+    def copy_password(self):
+        """Şifreyi panoya kopyala."""
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.password)
+        QMessageBox.information(self, "Kopyalandı", "Şifre panoya kopyalandı!")
 
     def edit_password(self):
         """Şifre düzenleme işlevi."""
