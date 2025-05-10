@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QColorDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout, QColorDialog, QMessageBox, QHBoxLayout
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 import random
@@ -23,6 +23,17 @@ class AddPasswordDialog(QDialog):
         self.password_label = QLabel("Şifre:")
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)  # Şifre gizleme
+
+        # Göz simgesi/göster-gizle butonu
+        self.toggle_password_button = QPushButton("👁")
+        self.toggle_password_button.setCheckable(True)
+        self.toggle_password_button.setFixedWidth(30)
+        self.toggle_password_button.clicked.connect(self.toggle_password_visibility)
+
+        # Şifre alanı ve göz butonunu yatayda hizala
+        password_layout = QHBoxLayout()
+        password_layout.addWidget(self.password_input)
+        password_layout.addWidget(self.toggle_password_button)
 
         # Rastgele Şifre Üret Butonu
         self.generate_password_button = QPushButton("Rastgele Şifre Üret")
@@ -55,6 +66,7 @@ class AddPasswordDialog(QDialog):
         layout.addWidget(self.username_label)
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_label)
+        layout.addLayout(password_layout)
         layout.addWidget(self.password_input)
         layout.addWidget(self.generate_password_button)  # Rastgele şifre butonunu ekle
         layout.addWidget(self.color_button)
@@ -96,6 +108,14 @@ class AddPasswordDialog(QDialog):
         chars = string.ascii_letters + string.digits + string.punctuation
         password = ''.join(random.choice(chars) for _ in range(length))
         self.password_input.setText(password)
+
+    def toggle_password_visibility(self):
+        if self.toggle_password_button.isChecked():
+            self.password_input.setEchoMode(QLineEdit.Normal)
+            self.toggle_password_button.setText("🙈")
+        else:
+            self.password_input.setEchoMode(QLineEdit.Password)
+            self.toggle_password_button.setText("👁")
 
     def select_color(self):
         color = QColorDialog.getColor()
