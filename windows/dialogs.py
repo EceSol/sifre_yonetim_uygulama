@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayout
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 import random
+import string
 
 class AddPasswordDialog(QDialog):
     def __init__(self, veritabani):
@@ -22,6 +23,10 @@ class AddPasswordDialog(QDialog):
         self.password_label = QLabel("Şifre:")
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)  # Şifre gizleme
+
+        # Rastgele Şifre Üret Butonu
+        self.generate_password_button = QPushButton("Rastgele Şifre Üret")
+        self.generate_password_button.clicked.connect(self.generate_password)
 
         self.color_button = QPushButton("Renk Seç")
         self.color_button.clicked.connect(self.select_color)
@@ -51,6 +56,7 @@ class AddPasswordDialog(QDialog):
         layout.addWidget(self.username_input)
         layout.addWidget(self.password_label)
         layout.addWidget(self.password_input)
+        layout.addWidget(self.generate_password_button)  # Rastgele şifre butonunu ekle
         layout.addWidget(self.color_button)
         layout.addWidget(self.save_button)
         layout.addWidget(self.cancel_button)
@@ -83,6 +89,13 @@ class AddPasswordDialog(QDialog):
                 background-color: #3d8b40;
             }
         """)
+
+    def generate_password(self):
+        """Güçlü rastgele şifre üret ve şifre alanına yaz."""
+        length = 16
+        chars = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.choice(chars) for _ in range(length))
+        self.password_input.setText(password)
 
     def select_color(self):
         color = QColorDialog.getColor()
